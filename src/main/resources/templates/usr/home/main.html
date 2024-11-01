@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Main</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #FFF3CD;
+    }
+
+    .Answer-board {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #F2F2EB;
+    }
+
+    .answer {
+      margin-top: 15px;
+    }
+
+    button {
+      border-radius: 10px;
+      background: none; /* 버튼 배경 제거 */
+      border: none; /* 버튼 테두리 제거 */
+      cursor: pointer; /* 커서 포인터 */
+      padding: 5px 10px; /* 여백 설정 */
+    }
+
+    button:hover {
+      border: 1px solid #ccc;
+      background-color: #FFF3CD;
+    }
+  </style>
+</head>
+<body>
+<div class="Answer-board">
+  <input type="text" id="question" name="question">
+  <button onclick="getAnswer()">질문하기</button>
+  <div class="answer"></div>
+</div>
+
+<script>
+  function getAnswer() {
+    const questionInput = document.getElementById("question");
+    const question = questionInput.value;
+
+    fetch("/usr/answer/question", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({question: question})
+    })
+            .then(response => response.text())
+            .then(answer => {
+              document.querySelector(".answer").innerHTML = "답변 : " + answer;
+              questionInput.value = '';
+            })
+            .catch(error => console.error("Error:", error));
+  }
+</script>
+</body>
+</html>
