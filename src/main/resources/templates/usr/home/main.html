@@ -13,16 +13,23 @@
       background-color: #FFF3CD;
     }
 
-    .Answer-board {
+    .information {
       border: 1px solid #ccc;
       text-align: center;
       padding: 10px;
       border-radius: 10px;
       background-color: #F2F2EB;
+      height: 100px;
+      width: 200px;
     }
-
-    .answer {
-      margin-top: 15px;
+    .ShowInformation {
+      border: 1px solid #ccc;
+      text-align: center;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: #F2F2EB;
+      height: 100px;
+      width: 200px;
     }
 
     button {
@@ -40,30 +47,314 @@
   </style>
 </head>
 <body>
-<div class="Answer-board">
-  <input type="text" id="question" name="question">
-  <button onclick="getAnswer()">질문하기</button>
-  <div class="answer"></div>
-</div>
+<select id="areaSelect" onchange="updateSigunguOptions()">
+  <option value="">지역을 선택해주세요</option>
+  <!-- 지역 목록이 여기 들어갑니다. -->
+</select>
 
+<select id="sigunguSelect">
+  <option value="">시군구를 선택해주세요</option>
+  <!-- 시군구 목록은 첫 번째 선택에 따라 동적으로 채워집니다. -->
+</select>
+<button onclick="searchLocation()">찿기</button>
+<div class="information"></div>
+<div class="ShowInformation"></div>
 <script>
-  function getAnswer() {
-    const questionInput = document.getElementById("question");
-    const question = questionInput.value;
+  document.addEventListener('DOMContentLoaded', function() {
+    const areaSelect = document.getElementById("areaSelect");
 
-    fetch("/usr/answer/question", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: new URLSearchParams({question: question})
-    })
-            .then(response => response.text())
-            .then(answer => {
-              document.querySelector(".answer").innerHTML = "답변 : " + answer;
-              questionInput.value = '';
+    // AJAX로 지역 목록을 가져온다
+    fetch('/getAreaList')
+            .then(response => response.json())
+            .then(data => {
+              console.log("data : ", data);
+              data.forEach(item => {
+                const option = document.createElement("option");
+                option.value = item.areaNm;  // 지역 이름을 value로 설정
+                option.textContent = item.areaNm;  // 지역 이름을 텍스트로 설정
+                areaSelect.appendChild(option);
+              });
             })
-            .catch(error => console.error("Error:", error));
+            .catch(error => {
+              console.error("지역 목록을 불러오는 데 실패했습니다.", error);
+            });
+  });
+  function updateSigunguOptions() {
+    const areaSelect = document.getElementById("areaSelect");
+    const sigunguSelect = document.getElementById("sigunguSelect");
+
+    // 이전에 채운 시군구 옵션을 지운다
+    sigunguSelect.innerHTML = '<option value="">시군구를 선택해주세요</option>';
+
+    const areaName = areaSelect.value;
+
+    if (areaName) {
+      // AJAX로 시군구 데이터를 가져온다.
+      fetch(`/getSigunguList?areaNm=${areaName}`)
+              .then(response => response.json())
+              .then(data => {
+                data.forEach(item => {
+                  const option = document.createElement("option");
+                  option.value = item.sigunguNm;
+                  option.textContent = item.sigunguNm;
+                  sigunguSelect.appendChild(option);
+                });
+              })
+              .catch(error => {
+                console.error("시군구 데이터를 불러오는 데 실패했습니다.", error);
+              });
+    }
+  }
+
+  function searchLocation() {
+    const areaSelect = document.getElementById("areaSelect");
+    const sigunguSelect = document.getElementById("sigunguSelect");
+
+    // 선택된 지역 이름과 시군구 이름을 가져옴
+    const areaName = areaSelect.value;
+    const sigunguName = sigunguSelect.value;
+
+    // 두 값이 모두 선택되었는지 확인
+    if (!areaName) {
+      alert("지역과 시군구를 모두 선택해주세요.");
+      return;
+    }
+    fetch(`/getCode?areaNm=${encodeURIComponent(areaName)}&sigunguNm=${encodeURIComponent(sigunguName)}`)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json(); // JSON 형식으로 응답 받기
+            })
+            .then(data => {
+              console.log(data);
+              const areacd = data[0].areaCd;
+              const sigungucd = data[0].signguCd;
+              fetch(`/usr/walk/getShow?areaCd=${areacd}&signguCd=${sigungucd}`)
+                      .then(response => {
+                        if (!response.ok) {
+                          throw new Error("Network response was not ok");
+                        }
+                        return response.json(); // JSON 형식으로 응답 받기
+                      })
+                      .then(data => {
+                        console.log(data);
+                      }).catch(error => {
+                console.error("There was a problem with the fetch operation:", error);
+                alert("위치 정보 요청 중 오류가 발생했습니다."); // 오류 발생 시 경고
+              });
+            })
+            .catch(error => {
+              console.error("There was a problem with the fetch operation:", error);
+              alert("위치 정보 요청 중 오류가 발생했습니다."); // 오류 발생 시 경고
+            });
+
+
+    // 선택된 값을 결합하여 location 변수에 저장
+    const location = areaName;
+
+    // 서버로 요청을 보냄
+    fetch(`/getLatLng?location=${location}`)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json(); // JSON 형식으로 응답 받기
+            })
+            .then(data => {
+              console.log(data);
+              // 반환된 위도와 경도 처리
+              if (data) {
+                const lat = data[0];
+                const lng = data[1];
+                const gridCoordinates = convertLatLngToGrid(lat, lng);
+                getWeatherInfo(gridCoordinates.nx, gridCoordinates.ny);
+              } else {
+                alert("위치 정보를 찾을 수 없습니다."); // 위치 정보를 찾지 못했을 경우 경고
+              }
+            })
+            .catch(error => {
+              console.error("There was a problem with the fetch operation:", error);
+              alert("위치 정보 요청 중 오류가 발생했습니다."); // 오류 발생 시 경고
+            });
+  }
+  let polyline; // Polyline 객체 추가
+  let path = []; // 경로를 저장할 배열
+  var RE = 6371.00877; // 지구 반경(km)
+  var GRID = 5.0; // 격자 간격(km)
+  var SLAT1 = 30.0; // 투영 위도1(degree)
+  var SLAT2 = 60.0; // 투영 위도2(degree)
+  var OLON = 126.0; // 기준점 경도(degree)
+  var OLAT = 38.0; // 기준점 위도(degree)
+  var XO = 43; // 기준점 X좌표(GRID)
+  var YO = 136; // 기준점 Y좌표(GRID)
+  function dfs_xy_conv(code, v1, v2) {
+    var DEGRAD = Math.PI / 180.0;
+    var RADDEG = 180.0 / Math.PI;
+
+    var re = RE / GRID;
+    var slat1 = SLAT1 * DEGRAD;
+    var slat2 = SLAT2 * DEGRAD;
+    var olon = OLON * DEGRAD;
+    var olat = OLAT * DEGRAD;
+
+    var sn = Math.tan(Math.PI * 0.25 + slat2 * 0.5) / Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+    sn = Math.log(Math.cos(slat1) / Math.cos(slat2)) / Math.log(sn);
+    var sf = Math.tan(Math.PI * 0.25 + slat1 * 0.5);
+    sf = Math.pow(sf, sn) * Math.cos(slat1) / sn;
+    var ro = Math.tan(Math.PI * 0.25 + olat * 0.5);
+    ro = re * sf / Math.pow(ro, sn);
+
+    var rs = {};
+    if (code == "toXY") {
+      rs['lat'] = v1; // 위도
+      rs['lng'] = v2; // 경도
+      var ra = Math.tan(Math.PI * 0.25 + (v1) * DEGRAD * 0.5);
+      ra = re * sf / Math.pow(ra, sn);
+      var theta = v2 * DEGRAD - olon;
+      if (theta > Math.PI) theta -= 2.0 * Math.PI;
+      if (theta < -Math.PI) theta += 2.0 * Math.PI;
+      theta *= sn;
+      rs['x'] = Math.floor(ra * Math.sin(theta) + XO + 0.5);
+      rs['y'] = Math.floor(ro - ra * Math.cos(theta) + YO + 0.5);
+    } else {
+      rs['x'] = v1; // X좌표
+      rs['y'] = v2; // Y좌표
+      var xn = v1 - XO;
+      var yn = ro - v2 + YO;
+      ra = Math.sqrt(xn * xn + yn * yn);
+      if (sn < 0.0) ra = -ra;
+      var alat = Math.pow((re * sf / ra), (1.0 / sn));
+      alat = 2.0 * Math.atan(alat) - Math.PI * 0.5;
+
+      if (Math.abs(xn) <= 0.0) {
+        theta = 0.0;
+      } else {
+        if (Math.abs(yn) <= 0.0) {
+          theta = Math.PI * 0.5;
+          if (xn < 0.0) theta = -theta;
+        } else {
+          theta = Math.atan2(xn, yn);
+        }
+      }
+      var alon = theta / sn + olon;
+      rs['lat'] = alat * RADDEG; // 변환된 위도
+      rs['lng'] = alon * RADDEG; // 변환된 경도
+    }
+    return rs; // 결과 반환
+  }
+
+  // 위경도를 격자 좌표로 변환하는 함수
+  function convertLatLngToGrid(latitude, longitude) {
+    var result = dfs_xy_conv("toXY", latitude, longitude);
+    return {
+      nx: String(result.x), // nx를 문자열로 변환
+      ny: String(result.y)  // ny를 문자열로 변환
+    };
+  }
+  function getCurrentDate() {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+    const day = String(today.getDate()).padStart(2, '0');
+
+    return `${year}${month}${day}`;
+  }
+  function getCurrentHour() {
+    const today = new Date();
+    const hours = today.getHours(); // 현재 시간 (0-23)
+    const minutes = today.getMinutes(); // 현재 분 (0-59)
+
+    // 현재 시간에 대한 결과를 저장할 변수
+    let adjustedHour;
+
+    // 분이 10분 미만이면 전시간으로 설정
+    if (minutes < 10) {
+      adjustedHour = hours > 0 ? hours - 1 : 23; // 0시인 경우 23시로 설정
+    } else {
+      adjustedHour = hours; // 10분 이상이면 현재 시간으로 설정
+    }
+
+    // 2자리 형식으로 반환
+    return String(adjustedHour).padStart(2, '0') + "00"; // 예: "0700", "0800"
+  }
+
+  function getWeatherInfo(nx, ny) {
+    // 현재 날짜와 시간 가져오기
+    const date = getCurrentDate();
+    const hour = getCurrentHour();
+    console.log(date);
+    console.log(hour);
+    console.log(nx);
+    console.log(ny);
+
+    // AJAX 요청을 통해 날씨 정보 가져오기
+    fetch(`/usr/walk/getWeather?date=${date}&hour=${hour}&nx=${nx}&ny=${ny}`)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+              }
+              return response.json(); // JSON 형태로 응답을 가져오기
+            })
+            .then(data => {
+              console.log(data);
+              // obsrValue 값을 저장할 변수
+              let obsrValuePTY, obsrValueRN1, obsrValueT1H;
+
+              // items.item 배열이 있는지 확인하고 순회
+              const items = data.response.body.items.item; // item 배열 가져오기
+              if (Array.isArray(items)) {
+                items.forEach(item => {
+                  const category = item.category; // category 값을 가져옴
+                  const obsrValue = item.obsrValue; // obsrValue 값을 가져옴
+
+                  // category에 따라 obsrValue 값 할당
+                  if (category === "PTY") {
+                    obsrValuePTY = obsrValue;
+                  } else if (category === "RN1") {
+                    obsrValueRN1 = obsrValue;
+                  } else if (category === "T1H") {
+                    obsrValueT1H = obsrValue;
+                  }
+                });
+              }
+
+              // obsrValuePTY에 따라 아이콘 결정
+              const weatherIcon = {
+                "0": "🌞",  // 맑음
+                "1": "🌧",  // 비
+                "2": "🌧/🌨", // 비/눈
+                "3": "🌨",  // 눈
+                "4": "⛈",  // 천둥번개
+              };
+
+              // PTY에 따른 날씨 아이콘 출력
+              const weatherSymbol = weatherIcon[obsrValuePTY] || "❓"; // 기본 아이콘
+              const weatherSymbolElement = document.querySelector(".information"); // 날씨 아이콘을 표시할 요소
+
+              // "이 지역의 날씨" 멘트를 추가하고 아이콘을 다음 줄에 표시
+              weatherSymbolElement.innerHTML = `이 지역의 날씨<br><span style="font-size: 1.5em;">${weatherSymbol}</span`; // 크기 조정 및 줄 바꿈 추가
+
+              // 기온 처리 및 표시
+              if (obsrValueT1H) {
+                const temperature = `${obsrValueT1H}°C`; // 섭씨 기호 붙이기
+                const temperatureElement = document.createElement('div');
+                temperatureElement.textContent = `기온: ${temperature}`;
+                weatherSymbolElement.appendChild(temperatureElement); // 날씨 아이콘 아래에 추가
+              }
+
+              // 강수량 처리 및 표시
+              if (obsrValueRN1 > 0) { // 강수량이 0 이상일 때만 표시
+                const rainfall = `${obsrValueRN1}mm`; // 강수량에 .mm 붙이기
+                const rainfallElement = document.createElement('div');
+                rainfallElement.textContent = `강수량: ${rainfall}`;
+                weatherSymbolElement.appendChild(rainfallElement); // 날씨 아이콘 아래에 추가
+              }
+
+            })
+            .catch(error => {
+              console.error('Error fetching weather data:', error);
+            });
   }
 </script>
 </body>
