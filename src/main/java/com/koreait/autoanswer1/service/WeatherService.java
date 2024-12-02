@@ -1,6 +1,6 @@
-package com.koreait.resionweather1.service;
+package com.koreait.autoanswer1.service;
 
-import com.koreait.resionweather1.vo.GridCoordinate;
+import com.koreait.autoanswer1.vo.GridCoordinate;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -8,8 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -98,11 +96,14 @@ public class WeatherService {
 
         // 요청 URL 생성
         String requestUrl = UriComponentsBuilder.fromHttpUrl(baseUrl)
-                .queryParam("MobileOS", "WEB") // OS 유형
+                .queryParam("serviceKey", tarRlte)
+                .queryParam("pageNo", 1)
+                .queryParam("numOfRows", 10)
+                .queryParam("MobileOS", "ETC") // OS 유형
                 .queryParam("MobileApp", "TestApp") // 앱 이름
                 .queryParam("serviceKey", tarRlte) // API 키 추가
                 .queryParam("_type", "json") // JSON 응답
-                .queryParam("baseYm",getCurrentMonth())
+                .queryParam("baseYm",202410)
                 .queryParam("areaCd", areaCd)
                 .queryParam("signguCd",signguCd)
                 .build()

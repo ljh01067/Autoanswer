@@ -1,4 +1,4 @@
-package com.koreait.resionweather1.vo;
+package com.koreait.autoanswer1.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

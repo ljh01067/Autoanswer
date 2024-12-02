@@ -28,8 +28,10 @@
       padding: 10px;
       border-radius: 10px;
       background-color: #F2F2EB;
-      height: 100px;
-      width: 200px;
+      height: 300px;
+      width: 500px;
+      max-height: 300px; /* 필요한 높이로 설정 */
+      overflow-y: auto;  /* 세로 스크롤 추가 */
     }
 
     button {
@@ -67,7 +69,6 @@
     fetch('/getAreaList')
             .then(response => response.json())
             .then(data => {
-              console.log("data : ", data);
               data.forEach(item => {
                 const option = document.createElement("option");
                 option.value = item.areaNm;  // 지역 이름을 value로 설정
@@ -127,7 +128,6 @@
               return response.json(); // JSON 형식으로 응답 받기
             })
             .then(data => {
-              console.log(data);
               const areacd = data[0].areaCd;
               const sigungucd = data[0].signguCd;
               fetch(`/usr/walk/getShow?areaCd=${areacd}&signguCd=${sigungucd}`)
@@ -138,7 +138,29 @@
                         return response.json(); // JSON 형식으로 응답 받기
                       })
                       .then(data => {
-                        console.log(data);
+                        // JSON 데이터에서 items 값을 가져와 div에 추가
+                        const items = data.response.body.items.item; // `data`는 JSON 객체
+
+// DOM 요소 선택
+                        const showInfoDiv = document.querySelector(".ShowInformation");
+                        console.log(items);
+// 데이터가 존재하면 리스트 생성
+                        if (items && items.length > 0) {
+                          // 데이터를 순회하며 리스트 HTML 작성
+                          const listHTML = items.map(item => `
+    <li>
+      <strong>${item.rlteTatsNm}</strong> (${item.rlteCtgryLclsNm} - ${item.rlteCtgrySclsNm})<br>
+      위치: ${item.rlteBsicAdres} (${item.rlteSignguNm}, ${item.rlteRegnNm})<br>
+      순위: ${item.rlteRank}
+    </li>
+  `).join('');
+
+                          // 리스트를 <ul> 태그로 감싸기
+                          showInfoDiv.innerHTML = `<ul>${listHTML}</ul>`;
+                        } else {
+                          // 데이터가 없을 경우 메시지 출력
+                          showInfoDiv.innerText = "표시할 데이터가 없습니다.";
+                        }
                       }).catch(error => {
                 console.error("There was a problem with the fetch operation:", error);
                 alert("위치 정보 요청 중 오류가 발생했습니다."); // 오류 발생 시 경고
@@ -162,7 +184,6 @@
               return response.json(); // JSON 형식으로 응답 받기
             })
             .then(data => {
-              console.log(data);
               // 반환된 위도와 경도 처리
               if (data) {
                 const lat = data[0];
@@ -283,10 +304,6 @@
     // 현재 날짜와 시간 가져오기
     const date = getCurrentDate();
     const hour = getCurrentHour();
-    console.log(date);
-    console.log(hour);
-    console.log(nx);
-    console.log(ny);
 
     // AJAX 요청을 통해 날씨 정보 가져오기
     fetch(`/usr/walk/getWeather?date=${date}&hour=${hour}&nx=${nx}&ny=${ny}`)
@@ -297,7 +314,6 @@
               return response.json(); // JSON 형태로 응답을 가져오기
             })
             .then(data => {
-              console.log(data);
               // obsrValue 값을 저장할 변수
               let obsrValuePTY, obsrValueRN1, obsrValueT1H;
 

@@ -1,7 +1,7 @@
-package com.koreait.resionweather1.controller;
+package com.koreait.autoanswer1.controller;
 
-import com.koreait.resionweather1.service.LacalService;
-import com.koreait.resionweather1.service.WeatherService;
+import com.koreait.autoanswer1.service.LacalService;
+import com.koreait.autoanswer1.service.WeatherService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

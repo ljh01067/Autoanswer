@@ -1,10 +1,10 @@
-package com.koreait.resionweather1.controller;
+package com.koreait.autoanswer1.controller;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.ui.Model;
-import com.koreait.resionweather1.service.LacalService;
-import com.koreait.resionweather1.service.WeatherService;
-import com.koreait.resionweather1.vo.GridCoordinate;
+import com.koreait.autoanswer1.service.LacalService;
+import com.koreait.autoanswer1.service.WeatherService;
+import com.koreait.autoanswer1.vo.GridCoordinate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

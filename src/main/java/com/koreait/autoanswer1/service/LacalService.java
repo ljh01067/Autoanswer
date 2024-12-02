@@ -1,6 +1,6 @@
-package com.koreait.resionweather1.service;
+package com.koreait.autoanswer1.service;
 
-import com.koreait.resionweather1.repository.LocalRepository;
+import com.koreait.autoanswer1.repository.LocalRepository;
 
 import org.springframework.stereotype.Service;
 

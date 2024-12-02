@@ -1,4 +1,4 @@
-package com.koreait.resionweather1.repository;
+package com.koreait.autoanswer1.repository;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
